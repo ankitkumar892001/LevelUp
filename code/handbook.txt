@@ -1,0 +1,712 @@
+Array
+int[] arr = new int[10];
+int[] arr = new int[] {1, 2, 3, 4, 5};
+size                    arr.length
+get                     arr[i]
+set                     arr[i] = 99
+Arrays.sort(arr, (a,b)->{
+    return a-b;
+})
+Arrays.fill(arr, 100);
+
+Java Array Initialization
+When initializing arrays in Java, there's an important distinction in how multi-dimensional arrays are created:
+
+COMPLETE INITIALIZATION
+int[][] dp = new int[10][2];
+This creates a fully initialized 2D array where: All 10 references in the first dimension point to actual int arrays
+Each of these int arrays has 2 elements initialized to 0. So dp[5] will be {0,0} (an actual array), not null
+
+PARTIAL INITIALIZATION
+int[][] dp = new int[10][];
+This only initializes the first dimension: You get 10 references that can point to int arrays
+These references are initially null. So dp[5] will be null until you explicitly assign an array
+
+
+
+
+
+
+
+
+
+String str = "Hello";
+String str = new String("Hello");
+size                    str.legnth()
+add                     str = str + "Hello World"
+add                     str = str + ('a' + 10);
+remove                  STRINGS ARE IMMUTABLE
+get                     str.charAt(i)
+set                     STRINGS ARE IMMUTABLE
+sub-string [i,j]        str.substring(i, j+1)
+split                   str.split(",")
+equals                  str.equals("Hello") RIGHT 
+                        if (str == "Hello") WRONG, this will compare refeencefe in java not value
+
+
+
+
+
+
+
+
+
+StringBuilder sb = new StringBuilder("Hello");
+size                    sb.length()
+add                     sb.append("World")
+remove [i,j]            sb.delete(i, j+1)
+get                     sb.charAt(i)
+set                     sb.setCharAt(i, 'a')
+to string               sb.toString()
+
+
+
+
+
+
+
+
+
+ArrayList<Integer> al = new ArrayList<>();
+ArrayList<Integer>[] tree = new ArrayList<Integer>[n];          X WRONG
+ArrayList<Integer>[] tree = new ArrayList[n];                   V RIGHT
+ArrayList<TreeNode> ans = new ArrayList<>();
+ArrayList<Integer> newAl = new ArrayList<>(oldAl);
+size                    al.size()
+add                     al.add(value) / al.add(index, value)
+remove                  al.remove(index) / al.remove(value)
+get                     al.get(index)
+set                     al.set(index, value)
+traverse                for (var x : al) {
+                            System.out.println(x);
+                        }
+Collections.sort(al, (a,b)->{
+    return a-b;
+})
+reverse                 Collections.reverse(al);
+
+
+
+
+
+
+
+
+
+LinkedList
+LinkedList<Integer> ll = new LinkedList<>();
+LinkedList<Integer> newLl = new LinkedList<>(oldLl);
+size                    ll.size()
+add                     ll.addFirst(value)  / ll.addLastvalue)
+remove                  ll.removeFirst()    / ll.removeLastvalue()
+get                     ll.getFirst()  / ll.getLast()
+traverse                for (var x : ll) {
+                            System.out.println(x);
+                        }
+reverse                 Collections.reverse(ll);
+
+
+
+
+
+
+
+
+
+TreeMap<Integer, Integer> map = new TreeMap<>();
+size                    map.size()
+add                     map.put(key, value)
+                        map.putIfAbsent(key, value)             // useful for <Integer, ArrayList<Integer>>
+remove                  map.remove(key)
+get                     map.get(key)                            // returns null if key is not present
+                        map.getOrDefault(key, 0)
+contains                map.containsKey(key)
+set                     map.put(key, value)
+traverse                for (var x : map.entrySet()) {
+                            System.out.println("Key: " + x.getKey() + ", Value: " + x.getValue());
+                        }
+                        for (var x : map.keySet()) {
+                            
+                        }
+                        for (var x : map.valueSet()) {
+                            
+                        }
+firstKey()              Returns the smallest key in the map
+lastKey()               Returns the largest key in the map
+higherKey(K key)        Returns the smallest key strictly greater than the given key
+lowerKey(K key)         Returns the largest key strictly less than the given key
+ceilingKey(K key)       Returns the smallest key greater than or equal to the given key
+floorKey(K key)         Returns the largest key less than or equal to the given key
+
+
+
+
+
+
+
+
+
+TreeSet<Integer> set = new TreeSet<>();
+size                    set.size()
+add                     set.add(value)
+remove                  set.remove(value)
+get                     set.contains(value)
+set                     NA
+traverse                for (var x : set) {
+                            System.out.println(x);
+                        }
+
+
+
+
+
+
+
+
+
+PriorityQueue<Integer> pq = new PriorityQueue<>();
+PriorityQueue<Integer> pq = new PriorityQueue<>((a,b)->{
+    return a-b; // this - other -> default behaviour -> min PriorityQueue
+    return b-a; // other - this -> reverse of default behaviour -> max PriorityQueue
+});
+PriorityQueue<Double> pq = new PriorityQueue<>((a, b)->{
+    return Double.compare(a, b);
+});
+PriorityQueue<String> pq = new PriorityQueue<>((a, b)->{
+    return a.compareTo(b); // minPQ for Strings (lexicographical order)
+    return a.compareToIgnoreCase(b);
+});
+
+size                    pq.size()
+add                     pq.add(value)
+remove                  pq.remove()                     // Removes and returns the head (smallest element)
+get                     pq.peek()                       // Retrieves the head (smallest element) without removing
+traverse                for (var x : pq) {
+                            System.out.println(x);
+                        }
+
+
+
+
+
+
+
+
+
+Stack<Integer> st = new Stack<>();
+size                    st.size()
+add                     st.push(value)              // Adds an element to the top
+remove                  st.pop()                    // Removes and returns the top element
+get                     st.peek()                   // Retrieves the top element without removing
+traverse                for (var x : st) {
+                            System.out.println(x);
+                        }
+
+
+
+
+
+
+
+
+
+Random rand = new Random();
+rand.nextInt(val); // returns random number between [0,val-1]
+convert int to string - Integer.toString() | Long.toString() | Float.toString() | Double.toString()
+parse - Integer.parseInt(str) | Double.parseDouble(str)
+
+Internals
+Tree-1.mp4 - Java vs C++ object reference difference
+Graph-6.mp4 - 3:20:00 - Lambda Expression Internals
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tree
+Watch Later:
+Tree-8.mp4 - AVL Tree
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Graph
+Watch Later:
+Graph-12.mp4 - Articulation Point
+
+Notes:
+O(V+E) = O(n)
+ArrayList<Integer>[] graph = new ArrayList[n];
+Tree - DACG - Directed Acyclic Connected Graph
+
+
+
+
+
+
+
+
+
+    DFS
+    1. mark
+    2. for all unvisited nbr's
+     2.1 dfs(nbr)
+    3. unmark - if you want to explore all the paths
+    
+    Notes:
+    for hasPath problems dont unmark
+    for allPath problems unmark
+
+
+
+
+    
+
+
+
+
+    BFS without cycle detection - mark vis after pushing into the queue
+    1. enqueue src
+    2. mark src
+    3. while queue !empty
+        3.1 dequeue vtx
+        3.2 for all unvisited nbr's
+            3.2.1 enqueue nbr
+            3.2.2 mark nbr
+
+    BFS with cycle detection - mark vis after popping out from the queue
+    1. enqueue src
+    2. while queue !empty
+        2.1 dequeue vtx
+        2.2 mark vtx
+        2.3 for all unvisited nbr's
+            2.3.1 enqueue nbr
+
+    BFS with jump
+    for (int[] d : dir) {
+        int nr = r;
+        int nc = c;
+        while (nr >= 0 && nr < n && nc >= 0 && nc < m && arr[nr][nc] == 0) {
+            nr += d[0];
+            nc += d[1];
+        }
+        nr -= d[0];
+        nc -= d[1];
+
+        for all unvisited nbr's
+        enqueue nbr
+    }
+
+    Notes:
+    BFS with cycle detection can ONLY tell you there is a cycle, nothing more than that like all the possible distances to a vertex
+    BFS (using LinkedList) with/without cycle detection guarantees shortest path only in unweighted/same wighted (typically 1) graphs, as it explores vertices in layers
+
+
+
+
+
+
+
+
+
+    UNION FIND
+    1. initialize parent array and size array (optional, for optimization)
+    2. findPar(u): recursively find and update the parent
+    3. union(u, v): connect two components, if they don’t form a cycle
+
+    Notes:
+    used to check connected components 
+    detect cycles
+    spanning tree
+
+    KRUSKAL'S MST ALGORITHM
+    1. sort edges by weight
+    2. apply UNION FIND
+
+    PRIM'S MST ALGORITH
+    1. based on BFS with cycle detection  - mark vis after popping out from the queue
+    2. use PQ(vtx, w) instead of LL - sort on the basis of w
+
+
+
+
+
+
+
+
+
+    DIJKSTRA'S ALGORITHM
+    1. based on BFS with cycle detection - mark vis after popping out from the queue
+    2. use PQ(vtx, wsf) instead of LL - sort on the basis of wsf
+
+    Notes:
+    BFS with cycle detection - allows us to explore all possible paths
+    PQ - helps in selecting the minCost path among all possible paths
+
+    BELLMAN-FORD'S ALRORITHM
+    1. initialize distances from the source to all vertices as ∞, and distance to the source as 0
+    2. relax all edges (V - 1) times
+    3. detect -ve cycles by performing 1 more relaxation
+
+    Notes:
+    for unweighted graphs - use BFS with LINKEDLIST
+    for weighted graphs - use BFS with PRIORITYQUEUE (Dijkstra)
+    for weighted graphs with -ve edge/cycle - use BELLMAN-FORD
+
+
+
+
+
+
+
+
+
+    KAHN'S TOPOLOGICAL ORDER ALGORITHM
+    1. initialize in-degree for all vertices
+    2. enqueue vertices with in-degree 0
+    3. while queue is not empty
+       3.1 dequeue vtx, add to result
+       3.2 for each nbr
+         3.2.1 decrease in-degree
+         3.2.2 enqueue nbr if in-degree is 0
+    4. if result contains all vertices, return it; else cycle detected
+
+    Notes:
+    WHY start with vertices with in-degree 0? vertices with in-degree 0 are the "starting points" because they are independent
+    each level represents the list of tasks that can be performed parallely because they are independent of one another
+    each subsequent level represents the list of tasks that has to be performed serially
+    we can't perfrom level 2 tasks before completing level 0 & level 1 tasks
+
+
+
+
+
+
+
+
+
+    KOSARAJU'S SCC ALGORITHM
+    1. dfs
+    2. Transpose the Graph - g'
+    3. DFS on Transposed Graph - dfs'
+
+    Notes:
+    The key intuition is that SCCs have a unique property: If you reverse all edges of a graph, the SCCs remain the same, but the reachability relationships change.
+    Kosaraju's algorithm takes advantage of this property by: 
+    Performing a DFS on the original graph to get the finishing times of vertices
+    Reversing the graph’s edges
+    Performing DFS in the order of decreasing finishing times on the reversed graph
+    This way, we extract SCCs one by one, using the vertex with the highest finishing time first
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DP
+for all string related questions
+always think about 2 cases
+if s[i] == s[j]
+if s[i] != s[j]
+
+common faiths
+this method will return me the required data from (si,ei) | (r,c)
+
+subseq -> memoization
+substr -> tabulation
+no point of memoization => because you have to use static variable => forceful recursion => use direct tabulation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+StackQueue
+Watch Later:
+Stack-1.mp4 - Stack construction
+Stack-6.mp4 - buy and sell stock - do after dp
+
+Notes:
+Stock ke question stack se hote hai mostly
+parenthese ke bhi - always apply the basic valid parentheses logic, no matter what they are asking for min/max length
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+HashMapHeap
+Watch Later:
+HashMap-Heap-1.mp4 - Heap construction
+HashMap-Heap-2.mp4 - Heap Internals
+
+Notes:
+for PQ question always try to think of minPQ
