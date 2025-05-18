@@ -40,7 +40,7 @@ public class DP {
 
 
 
-	// ============================== 2 POINTER SET ========================================
+	// ======================================== 2 POINTER SET ========================================
 
 
 
@@ -1032,7 +1032,7 @@ public class DP {
 
 
 
-	// ============================== STRING SET ========================================
+	// ======================================== STRING SET ========================================
 	// always think about 2 cases
 	// if s[i] == s[j]
 	// if s[i] != s[j]
@@ -1389,16 +1389,15 @@ public class DP {
 				ans = isMatch_memo(s, w, i + 1, j + 1, dp);
 			} else if (c2 == '*') {
 				ans += isMatch_memo(s, w, i, j + 1, dp); // * = empty string
-				ans += isMatch_memo(s, w, i + 1, j, dp); // * = match current char and stay on *
+				ans += isMatch_memo(s, w, i + 1, j, dp); // * = match the curr char and stay on *
+				// ans += isMatch_memo(s, w, i + 1, j + 1, dp); // * = match the curr char and drop
+				// redundant call, as it will be covered in above 2 calls
 			} else {
 				ans = 0;
 			}
 		}
 
 		return dp[i][j] = (ans == 0 ? 0 : 1);
-	}
-	public int isMatch_tabu(String s, String w, int i, int j, int[][] dp) {
-		// TODO
 	}
 	public boolean isMatch(String s, String w) {
 		w = removeRedundantAsterisk(w);
@@ -1421,17 +1420,74 @@ public class DP {
 
 
 	// 10. Regular Expression Matching
-	public int isMatch_memo(String s, String w, int i, int j) {
-		// TODO
+	// MEMORIZE
+	// always treat * in combination with its prev char, never treat it individually, because * does not have any significance individually
+	// you need to handle the * case first, because if we just check c1 != c2 and return false, we may ignore case str = "a" pattern "c*a"
+	// base case - only 1 pattern can satisfy empty string - a*b*c*.*
+	public String removeRedundantAsterisk(String pattern) {
+		Stack<Character> st = new Stack<>();
+		for (int i = pattern.length() - 1; i >= 0; i--) {
+			char ch = pattern.charAt(i);
+			if (ch == '*' && st.size() != 0 && st.peek() == '*') {
+				continue;
+			}
+			st.push(ch);
+		}
+
+		StringBuilder sb = new StringBuilder();
+		while (st.size() != 0) {
+			sb.append(st.pop());
+		}
+
+		return sb.toString();
 	}
-	public boolean isMatch(String s, String w) {
-		int n = s.length();
-		int m = w.length();
+	public int isMatch_memo(String str, String pattern, int i, int j, int[][] dp) {
+		System.out.println(i + " " + j);
+		int n = str.length();
+		int m = pattern.length();
+
+		if (j == m && i == n) {
+			return dp[i][j] = 1;
+		}
+		if (j == m) {
+			return dp[i][j] = 0;
+		}
+		if (i == n) {
+			// only 1 pattern can satisfy empty string - a*b*c*.*
+			return dp[i][j] = (j + 1 < m && pattern.charAt(j + 1) == '*') ? isMatch_memo(str, pattern, i, j + 2, dp) : 0;
+		}
+
+		if (dp[i][j] != -1) {
+			return dp[i][j];
+		}
+
+		char c1 = str.charAt(i);
+		char c2 = pattern.charAt(j);
+
+		int ans = 0;
+		// you need to handle the * case first, because if we just check c1 != c2 and return false, we may ignore case str = "a" pattern "c*a"
+		if (j + 1 < m && pattern.charAt(j + 1) == '*') {
+			ans += isMatch_memo(str, pattern, i, j + 2, dp); // * = 0 = c2(0)
+			if (c1 == c2 || c2 == '.') {
+				ans += isMatch_memo(str, pattern, i + 1, j, dp); // * = 1 = c2(1) match the curr char but keep *
+			}
+		} else if (c1 == c2 || c2 == '.') {
+			ans = isMatch_memo(str, pattern, i + 1, j + 1, dp);
+		} else {
+			ans = 0;
+		}
+
+		return dp[i][j] = ans == 0 ? 0 : 1;
+	}
+	public boolean isMatch(String str, String pattern) {
+		pattern = removeRedundantAsterisk(pattern);
+		int n = str.length();
+		int m = pattern.length();
 		int[][] dp = new int[n + 1][m + 1];
 		for (int[] d : dp) {
 			Arrays.fill(d, -1);
 		}
-		return isMatch_memo(s, w, 0, 0) == 1;
+		return isMatch_memo(str, pattern, 0, 0, dp) == 1;
 	}
 
 
@@ -1639,11 +1695,67 @@ public class DP {
 
 
 
+	// 131. Palindrome Partitioning
+	// BACKTRACKING
+	// MEMORIZE
+	// currAns saves the palindrome partioning of the current path
+	public void partition_backtracking(String str, boolean[][] palindromeDp, int si, List<String> currAns, List<List<String>> ans) {
+		int n = str.length();
+		if (si == n) {
+			List<String> currAnsDeepCopy = new ArrayList<>(currAns);
+			ans.add(currAnsDeepCopy);
+			return;
+		}
+
+		for (int cut = si; cut < n; cut++) {
+			if (palindromeDp[si][cut] == true) {
+				String substring = str.substring(si, cut + 1);
+				currAns.add(substring);
+				partition_backtracking(str, palindromeDp, cut + 1, currAns, ans);
+				currAns.remove(currAns.size() - 1);
+			}
+		}
+	}
+	public List<List<String>> partition(String str) {
+		int n = str.length();
+		boolean[][] palindromeDp = new boolean[n][n];
+
+		for (int gap = 0; gap < n; gap++) {
+			for (int si = 0, ei = si + gap; ei < n; si++, ei++) {
+				if (gap == 0) {
+					palindromeDp[si][ei] = true;
+				} else if (gap == 1) {
+					palindromeDp[si][ei] = str.charAt(si) == str.charAt(ei);
+				} else {
+					palindromeDp[si][ei] = palindromeDp[si + 1][ei - 1] && str.charAt(si) == str.charAt(ei);
+				}
+			}
+		}
+
+		List<String> currAns = new ArrayList<>();
+		List<List<String>> ans = new ArrayList<>();
+		partition_backtracking(str, palindromeDp, 0, currAns, ans);
+		return ans;
+	}
+
+
+
+
+
+
+
+
+
 	// 132. Palindrome Partitioning II
 	// MEMORIZE
 	// faith - this method will return me the
 	// min no of cuts needed for palindrome partitioning the string from [si,n-1]
-	// test case - a...10 b 1...5
+	// WRONG APPROACH - find the longest palindrome in the given string and make recursive call for the left & right sub-string
+	// RIGHT APPROACH - BRUTE FORCE - NOT PREFERRED - find all the palindromes in the given string and make recursive call for the left & right sub-string
+	// RIGHT APPROACH - OPTIMIZED - PREFERRED - explore all possible sub-strings [si,idx] that is a palindarome and make recursive call for the rest right sub-string
+	// test case - a(10)ba(5)
+	// WRONG APPROACH ans = ["a(10)","b","a(5)"]
+	// RIGHT APPROACH ans = ["a(5)","a(5)ba(5)"]
 	public int minCut_memo (String str, int si, boolean[][] pdp, int[] dp) {
 		int n = str.length();
 		if (pdp[si][n - 1]) {
@@ -1692,6 +1804,85 @@ public class DP {
 
 
 
+	// 1278. Palindrome Partitioning III
+	// MEMORIZE
+	public int[][] minChanges(String str) {
+		int n = str.length();
+		int[][] dp = new int[n][n];
+
+		for (int gap = 0; gap < n; gap++) {
+			for (int si = 0, ei = si + gap; ei < n; si++, ei++) {
+				if (gap == 0) {
+					dp[si][ei] = 0;
+				} else if (gap == 1) {
+					dp[si][ei] = str.charAt(si) == str.charAt(ei) ? 0 : 1;
+				} else {
+					dp[si][ei] = str.charAt(si) == str.charAt(ei) ? 0 : 1;
+					dp[si][ei] += dp[si + 1][ei - 1];
+				}
+			}
+		}
+
+		return dp;
+	}
+	// TLE
+	public int palindromePartition_recu(String str, int si, int k, int[][] minChangesDp) {
+		int n = str.length();
+		if (k == 1) {
+			return minChangesDp[si][n - 1];
+		}
+
+		int myAns = (int)1e9;
+		for (int cut = si; cut < n && (n - 1) - (cut + 1) + 1 >= k - 1; cut++) {
+			int currAns = minChangesDp[si][cut];
+			int recAns = palindromePartition_recu(str, cut + 1, k - 1, minChangesDp);
+
+			myAns = Math.min(myAns, currAns + recAns);
+		}
+
+		return myAns;
+	}
+	public int palindromePartition_memo(String str, int si, int k, int[][] minChangesDp, int[][] dp) {
+		int n = str.length();
+		if (k == 1) {
+			return dp[si][k] = minChangesDp[si][n - 1];
+		}
+
+		if (dp[si][k] != -1) {
+			return dp[si][k];
+		}
+
+		int myAns = (int)1e9;
+		for (int cut = si; cut < n && (n - 1) - (cut + 1) + 1 >= k - 1; cut++) { // no of char in the string >= k
+			int currAns = minChangesDp[si][cut];
+			int recAns = palindromePartition_memo(str, cut + 1, k - 1, minChangesDp, dp);
+
+			myAns = Math.min(myAns, currAns + recAns);
+		}
+
+		return dp[si][k] = myAns;
+	}
+
+	public int palindromePartition(String str, int k) {
+		int n = str.length();
+		int[][] minChangesDp = minChanges(str);
+		int[][] dp = new int[n][k + 1];
+		for (int[]d : dp) {
+			Arrays.fill(d, -1);
+		}
+
+		// return palindromePartition_recu(str, 0, k, minChangesDp);
+		return palindromePartition_memo(str, 0, k, minChangesDp, dp);
+	}
+
+
+
+
+
+
+
+
+
 	// Count subsequences of type a^i, b^j, c^k
 	// https://www.geeksforgeeks.org/problems/count-subsequences-of-type-ai-bj-ck4425/1
 	// MEMORIZE
@@ -1721,19 +1912,6 @@ public class DP {
 		}
 
 		return (int)(cCount % MOD);
-	}
-
-
-
-
-
-
-
-
-
-	// 1278. Palindrome Partitioning III
-	public int palindromePartition(String s, int k) {
-		// TODO
 	}
 
 
@@ -2081,7 +2259,7 @@ public class DP {
 
 
 
-	// ============================== LIS SET ========================================
+	// ======================================== LIS SET ========================================
 
 
 
@@ -2551,6 +2729,7 @@ public class DP {
 
 
 
+	// ============================== TARGET SET ========================================
 
 
 
@@ -2560,8 +2739,55 @@ public class DP {
 
 
 
+	// Infinite Supply
+	public static int permutation_memo(int[] arr, int tar, int[] dp) {
+		if (tar == 0) {
+			return dp[tar] = 1;
+		}
 
+		if (dp[tar] != -1) {
+			return dp[tar];
+		}
 
+		int count = 0;
+		for (int ele : arr) {
+			if (ele <= tar) {
+				count += permutation_memo(arr, tar - ele, dp);
+			}
+		}
+
+		return dp[tar] = count;
+	}
+	public static int permutation_tabu(int[] arr, int TAR, int[] dp) {
+		for (int tar = 0; tar <= TAR; tar++) {
+			if (tar == 0) {
+				dp[tar] = 1;
+				continue;
+			}
+
+			int count = 0;
+			for (int ele : arr) {
+				if (ele <= tar) {
+					count += dp[tar - ele]; // permutation_tabu(arr, tar - ele, dp);
+				}
+			}
+
+			dp[tar] = count;
+			continue;
+		}
+
+		return dp[TAR];
+	}
+	public static int permutation(int[] arr, int tar) {
+		int n = arr.length;
+		int[] dp = new int[tar + 1];
+		Arrays.fill(dp, -1);
+
+		// int count = permutation_memo(arr, tar, dp);
+		int count = permutation_tabu(arr, tar, dp);
+		display1D(dp);
+		return count;
+	}
 
 
 
@@ -2571,12 +2797,90 @@ public class DP {
 
 
 
+	// Infinite Supply
+	// Combination = Permutaton, but you can't go back, similar to subseq
+	// {2,3,5,7} -> if you have picked 5 you can't pick 2 / 3
+	public static int combination_memo(int[] arr, int tar, int idx, int[][] dp) {
+		int n = arr.length;
+		if (tar == 0) {
+			return dp[tar][idx] = 1;
+		}
 
+		if (dp[tar][idx] != -1) {
+			return dp[tar][idx];
+		}
 
+		int count = 0;
+		for (int i = idx; i < n; i++) {
+			if (arr[i] <= tar) {
+				count += combination_memo(arr, tar - arr[i], i, dp);
+			}
+		}
 
+		return dp[tar][idx] = count;
+	}
+	// top -> bottom
+	// right -> left
+	// T: O(n * tar)
+	// S: O(n * tar)
+	public static int combination_tabu(int[] arr, int TAR, int IDX, int[][] dp) {
+		int n = arr.length;
+		for (int tar = 0; tar <= TAR; tar++) {
+			for (int idx = n - 1; idx >= IDX; idx--) {
+				if (tar == 0) {
+					dp[tar][idx] = 1;
+					continue;
+				}
+
+				int count = 0;
+				for (int i = idx; i < n; i++) {
+					if (arr[i] <= tar) {
+						count += dp[tar - arr[i]][i]; // combination_tabu(arr, tar - arr[i], i, dp);
+					}
+				}
+
+				dp[tar][idx] = count;
+				continue;
+			}
+		}
 
+		return dp[TAR][IDX];
+	}
+	// MEMORIZE
+	// the coe principle still remains the same - we will be following forward order, and we wont ask for prev ele
+	// loop over elements first, then over target (left to right)
+	// this avoids duplicate permutations and ensures combination count
+	// T: O(n * tar)
+	// S: O(tar)
+	public static int combination_opti(int[] arr, int TAR, int[] dp) {
+		int n = arr.length;
+		dp[0] = 1;
+		for (int ele : arr) {
+			for (int tar = ele; tar <= TAR; tar++) {
+				dp[tar] += dp[tar - ele];
+			}
+		}
+
+		return dp[TAR];
+	}
+	public static int combination(int[] arr, int tar) {
+		int n = arr.length;
+		int[][] dp = new int[tar + 1][n];
+		for (int[] d : dp) {
+			Arrays.fill(d, -1);
+		}
+
+		// int count = combination_memo(arr, tar, 0, dp);
+		// int count = combination_tabu(arr, tar, 0, dp);
+		// display2D(dp);
 
+		int[] dp1D = new int[tar + 1];
+		// initialize dp with 0 not -1
+		int count = combination_opti(arr, tar, dp1D);
+		display1D(dp1D);
 
+		return count;
+	}
 
 
 
@@ -2586,10 +2890,52 @@ public class DP {
 
 
 
+	// 377. Combination Sum IV
+	public static int permutation_memo(int[] arr, int tar, int[] dp) {
+		if (tar == 0) {
+			return dp[tar] = 1;
+		}
 
+		if (dp[tar] != -1) {
+			return dp[tar];
+		}
 
+		int count = 0;
+		for (int ele : arr) {
+			if (ele <= tar) {
+				count += permutation_memo(arr, tar - ele, dp);
+			}
+		}
+
+		return dp[tar] = count;
+	}
+	public static int permutation_tabu(int[] arr, int TAR, int[] dp) {
+		for (int tar = 0; tar <= TAR; tar++) {
+			if (tar == 0) {
+				dp[tar] = 1;
+				continue;
+			}
+
+			int count = 0;
+			for (int ele : arr) {
+				if (ele <= tar) {
+					count += dp[tar - ele];
+				}
+			}
 
+			dp[tar] = count;
+			continue;
+		}
 
+		return dp[TAR];
+	}
+	public int combinationSum4(int[] arr, int tar) {
+		int n = arr.length;
+		int[] dp = new int[tar + 1];
+		Arrays.fill(dp, -1);
+		return permutation_memo(arr, tar, dp);
+		// return permutation_tabu(arr, tar, dp);
+	}
 
 
 
@@ -2599,7 +2945,74 @@ public class DP {
 
 
 
+	// 322. Coin Change
+	public static int permutation_memo(int[] arr, int TAR, int[] dp) {
+		// TODO
+	}
+	public static int permutation_tabu(int[] arr, int TAR, int[] dp) {
+		dp[0] = 0;
+		for (int tar = 1; tar <= TAR; tar++) {
+			for (int ele : arr) {
+				if (ele <= tar) {
+					dp[tar] = Math.min(dp[tar], dp[tar - ele] + 1);
+				}
+			}
+		}
+
+		return dp[TAR];
+	}
+	public int coinChange(int[] arr, int tar) {
+		int[] dp = new int[tar + 1];
+		Arrays.fill(dp, (int)1e9);
+		int count = permutation_tabu(arr, tar, dp);
+		int count = permutation_memo(arr, tar, dp);
+		return count == (int)1e9 ? -1 : count;
+	}
+
+
+
+
+
+
+
+
+
+	// Subset Sum Problem
+	// https://www.geeksforgeeks.org/problems/subset-sum-problem-1611555638/1
+	// Limited Suppply
+	// Subset = Subseq -> every coin has a choice it may / may not come
+	static Boolean isSubsetSum_recu(int arr[], int tar, int idx) {
+		int n = arr.length;
+		if (tar == 0) {
+			return true;
+		}
+		if (idx == n) {
+			return false;
+		}
+
+		Boolean ans = false;
+		if (arr[idx] <= tar) {
+			ans = ans || isSubsetSum_recu(arr, tar - arr[idx], idx + 1); // i want to come
+		}
+		ans = ans || isSubsetSum_recu(arr, tar, idx + 1); // i don't want to come
 
+		return ans;
+	}
+	static Boolean isSubsetSum_memo(int arr[], int tar, int idx) {
+		// TODO
+	}
+	static Boolean isSubsetSum_tabu(int arr[], int tar, int idx) {
+		// TODO
+	}
+	static Boolean isSubsetSum_reverse_engineering(int arr[], int tar, int idx) {
+		// TODO
+	}
+	static Boolean isSubsetSum(int arr[], int tar) {
+		return isSubsetSum_recu(arr, tar, 0);
+		// return isSubsetSum_memo(arr, tar, 0);
+		// return isSubsetSum_tabu(arr, tar, 0);
+		// isSubsetSum_reverse_engineering(arr, tar, 0);
+	}
 
 
 
@@ -2609,14 +3022,70 @@ public class DP {
 
 
 
+	// 0 - 1 Knapsack Problem
+	// https://www.geeksforgeeks.org/problems/0-1-knapsack-problem0945/1
+	// Limited Supply
+	static int knapsack_memo(int[] val, int[] wt, int idx, int capacity, int[][] dp) {
+		int n = val.length;
+		if (capacity == 0) {
+			return 0;
+		}
+		if (idx == n) {
+			return 0;
+		}
 
 
+		if (dp[idx][capacity] != -1) {
+			return dp[idx][capacity];
+		}
 
+		int maxVal = 0;
+		if (wt[idx] <= capacity) {
+			maxVal = Math.max(maxVal, val[idx] + knapsack_memo(val, wt, idx + 1, capacity - wt[idx], dp)); // include
+		}
+		maxVal = Math.max(maxVal, knapsack_memo(val, wt, idx + 1, capacity, dp)); // exclude
 
+		return dp[idx][capacity] = maxVal;
+	}
+	// bottom -> top
+	// right -> left
+	static int knapsack_tabu(int[] val, int[] wt, int IDX, int CAPACITY, int[][] dp) {
+		int n = val.length;
+		for (int idx = n; idx >= IDX; idx--) {
+			for (int capacity = 0; capacity <= CAPACITY; capacity++) {
+				if (capacity == 0) {
+					dp[idx][capacity] = 0;
+					continue;
+				}
+				if (idx == n) {
+					dp[idx][capacity] = 0;
+					continue;
+				}
 
+				int maxVal = 0;
+				if (wt[idx] <= capacity) {
+					maxVal = Math.max(maxVal, val[idx] + dp[idx + 1][capacity - wt[idx]]); // include
+				}
+				maxVal = Math.max(maxVal, dp[idx + 1][capacity]); // exclude
 
+				dp[idx][capacity] = maxVal;
+			}
+		}
 
+		return dp[IDX][CAPACITY];
+	}
+	static int knapsack(int capacity, int[] val, int[] wt) {
+		int n = wt.length;
+		int[][] dp = new int[n + 1][capacity + 1];
+		for (int[] d : dp) {
+			for (int i = 0 ; i <= capacity; i++) {
+				d[i] = -1;
+			}
+		}
 
+		// return knapsack_memo(val, wt, 0, capacity, dp);
+		return knapsack_tabu(val, wt, 0, capacity, dp);
+	}
 
 
 
@@ -2627,9 +3096,33 @@ public class DP {
 
 
 
+	// Unbounded Knapsack (Repetition of items allowed)
+	// Knapsack with Duplicate Items
+	// https://www.geeksforgeeks.org/problems/knapsack-with-duplicate-items4201/1
+	// Infinite Supply
+	static int permutation_memo(int val[], int wt[], int capacity, int[] dp) {
+		if (capacity == 0) {
+			return dp[capacity] = 0;
+		}
 
+		if (dp[capacity] != -1) {
+			return dp[capacity];
+		}
 
+		int maxVal = 0;
+		for (int i = 0; i < wt.length; i++) {
+			if (wt[i] <= capacity) {
+				maxVal = Math.max(maxVal, val[i] + permutation_memo(val, wt, capacity - wt[i], dp));
+			}
+		}
 
+		return dp[capacity] = maxVal;
+	}
+	static int knapSack(int val[], int wt[], int capacity) {
+		int[] dp = new int[capacity + 1];
+		Arrays.fill(dp, -1);
+		return permutation_memo(val, wt, capacity, dp);
+	}
 
 
 
@@ -2639,24 +3132,1267 @@ public class DP {
 
 
 
+	// Find number of solutions of a linear equation of n variables
+	// https://www.geeksforgeeks.org/find-number-of-solutions-of-a-linear-equation-of-n-variables/
+	// Infinite Supply
+	public static int combination_memo(int[] arr, int tar, int idx, int[][] dp) {
+		int n = arr.length;
+		if (tar == 0) {
+			return dp[tar][idx] = 1;
+		}
 
+		if (dp[tar][idx] != -1) {
+			return dp[tar][idx];
+		}
 
-	public static void display(int[] arr) {
+		int count = 0;
+		for (int i = idx; i < n; i++) {
+			if (arr[i] <= tar) {
+				count += combination_memo(arr, tar - arr[i], i, dp);
+			}
+		}
+
+		return dp[tar][idx] = count;
+	}
+	static int countSol(int coeff[], int rhs) {
+		int n = coeff.length;
+		int[][] dp = new int[rhs + 1][n + 1];
+		for (int[] d : dp) {
+			Arrays.fill(d, -1);
+		}
+
+		return combination_memo(coeff, rhs, 0, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// 416. Partition Equal Subset Sum
+	// Limited Supply
+	// 0 -> not possible
+	// 1 -> possible
+	// -1 -> not explored
+	public int canPartition_memo(int[] arr, int idx, int tar, int[][] dp) {
+		int n = arr.length;
+		if (tar == 0) {
+			return dp[idx][tar] = 1;
+		}
+
+		if (idx == n) {
+			return dp[idx][tar] = 0;
+		}
+
+		if (dp[idx][tar] != -1) {
+			return dp[idx][tar];
+		}
+
+		int ans = 0;
+		ans += canPartition_memo(arr, idx + 1, tar, dp); // i don't want to come
+		if (ans < 1 && arr[idx] <= tar) {
+			ans += canPartition_memo(arr, idx + 1, tar - arr[idx], dp); // i want to come
+		}
+
+		return dp[idx][tar] = ans;
+	}
+	public boolean canPartition(int[] arr) {
+		int n = arr.length;
+
+		int tar = 0;
+		for (int ele : arr) {
+			tar += ele;
+		}
+		if ((tar & 1) == 1) { // odd tar
+			return false;
+		}
+		tar = tar >> 1;
+
+		int[][] dp = new int[n + 1][tar + 1];
+		for (int [] d : dp) {
+			Arrays.fill(d, -1);
+		}
+
+		return canPartition_memo(arr, 0, tar, dp) == 1;
+	}
+
+
+
+
+
+
+
+
+
+	// 494. Target Sum
+	// every ele has choice to be +ve or -ve
+	// MEMORIZE
+	public int findTargetSumWays_recu(int[] arr, int idx, int tar) {
+		int n = arr.length;
+		if (idx == n) {
+			if (tar == 0) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+
+		int count = 0;
+		count += findTargetSumWays_recu(arr, idx + 1, tar - arr[idx]); // i want to be positive
+		count += findTargetSumWays_recu(arr, idx + 1, tar + arr[idx]); // i want to be egative
+
+		return count;
+	}
+	int sum = 0;
+	int offset = 0;
+	// objective - mere ko target ko 0 pe leke jana hai
+	// by convention if you want to know how many ways are there to achieve target 5 you will look into dp[5]
+	// but if you want to know how many ways are there to achieve target -4 you can't look into dp[-4] INVALID
+	// the problem is target can be -ve but the array index can't be -ve
+	// we use an offset to convert -ve targets to valid indices
+	// remember, target did not changed just the place(index) to store the answer changed
+	public int findTargetSumWays_memo(int[] arr, int idx, int tar, int[][] dp) {
+		int n = arr.length;
+		if (idx == n) {
+			return dp[idx][tar + offset] = (tar == 0 ? 1 : 0);
+		}
+
+		if (dp[idx][tar + offset] != -1) {
+			return dp[idx][tar + offset];
+		}
+
+		int count = 0;
+		if (-sum <= tar - (arr[idx]) && tar - (arr[idx]) <= sum) {
+			// if tar goes beyond sum (say sum + x) there is no way we can get back to 0,
+			// because even if all the rest of the ele are -ve we will get -sum so (tar = sum + x) -sum will never becoe 0
+			// plus we don't have index to save (tar = sum + x) as well
+			count += findTargetSumWays_memo(arr, idx + 1, tar - (arr[idx]), dp); // i want to be positive
+		}
+		if (-sum <= tar - (-arr[idx]) && tar - (-arr[idx]) <= sum) {
+			count += findTargetSumWays_memo(arr, idx + 1, tar - (-arr[idx]), dp); // i want to be egative
+		}
+
+		return dp[idx][tar + offset] = count;
+	}
+	// always tar ko 0 pe le jana is not a good idea
+	// sometimes currSum ko tar pe le jana is a better idea, clean code
+	public int findTargetSumWays_memo(int[] arr, int idx, int currSum, int tar, int[][] dp) {
+		int n = arr.length;
+		if (idx == n) {
+			return dp[idx][currSum + offset] = (currSum == tar ? 1 : 0);
+		}
+
+		if (dp[idx][currSum + offset] != -1) {
+			return dp[idx][currSum + offset];
+		}
+
+		int count = 0;
+		// currSum can never go beyond the range, so no need for check
+		count += findTargetSumWays_memo(arr, idx + 1, currSum + arr[idx], tar, dp); // i want to be positive
+		count += findTargetSumWays_memo(arr, idx + 1, currSum - arr[idx], tar, dp); // i want to be positive
+
+		return dp[idx][currSum + offset] = count;
+	}
+	public int findTargetSumWays(int[] arr, int tar) {
+		int n = arr.length;
+		// return findTargetSumWays_recu(arr, 0, tar);
+
+		for (int ele : arr) {
+			sum += ele;
+		}
+		if (tar < -sum || tar > sum) {
+			return 0;
+		}
+		offset = sum;
+
+		int[][] dp = new int[n + 1][2 * sum + 1];
+		for (int[] d : dp) {
+			Arrays.fill(d, -1);
+		}
+
+		// return findTargetSumWays_memo(arr, 0, tar, dp);
+		return findTargetSumWays_memo(arr, 0, 0, tar, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// 698. Partition to K Equal Sum Subsets
+	// HARD
+	// MEMORIZE
+	public boolean canPartitionKSubsets_recu(int[] arr, int idx, int currSum, int target, int k, boolean[] vis) {
+		if (k == 0) return true;
+		if (currSum > target) return false;
+		if (currSum == target)
+			return canPartitionKSubsets_recu(arr, 0, 0, target, k - 1, vis);
+
+		for (int i = idx; i < arr.length; i++) {
+			if (!vis[i]) {
+				vis[i] = true;
+				if (canPartitionKSubsets_recu(arr, i + 1, currSum + arr[i], target, k, vis))
+					return true;
+				vis[i] = false;
+			}
+		}
+		return false;
+	}
+	public boolean canPartitionKSubsets(int[] arr, int k) {
+		int n = arr.length;
+		int sum = 0;
+		int maxEle = 0;
+		for (int ele : arr) {
+			sum += ele;
+			maxEle = Math.max(maxEle, ele);
+		}
+		int tar = sum / k;
+		if ((sum % k) != 0 || maxEle > tar) {
+			return false;
+		}
+
+		boolean[] vis = new boolean[n];
+		return canPartitionKSubsets_recu(arr, 0, 0, tar, k, vis);
+	}
+
+
+
+
+
+
+
+
+
+	// ======================================== CUT SET ========================================
+
+
+
+
+
+
+
+
+
+	// Matrix Chain Multiplication
+	// https://www.geeksforgeeks.org/problems/matrix-chain-multiplication0303/1
+	static int matrixMultiplication_memo(int arr[], int si, int ei, int[][] dp) {
+		int n = arr.length;
+		if (si + 1 == ei) {
+			return dp[si][ei] = 0;
+		}
+
+		if (dp[si][ei] != -1) {
+			return dp[si][ei];
+		}
+
+		int minCost = (int)1e9;
+		for (int cut = si + 1 ; cut <= ei - 1; cut++) {
+			int leftCost = matrixMultiplication_memo(arr, si, cut, dp);
+			int rightCost = matrixMultiplication_memo(arr, cut, ei, dp);
+			int myCost = leftCost + rightCost + arr[si] * arr[cut] * arr[ei];
+			minCost = Math.min(minCost, myCost);
+		}
+
+		return dp[si][ei] = minCost;
+	}
+	// observation: gap strategy
+	static int matrixMultiplication_tabu(int arr[], int SI, int EI, int[][] dp) {
+		int n = arr.length;
+		for (int gap = 0; gap < n; gap++) {
+			for (int si = 0, ei = gap; ei < n; si++, ei++) {
+				if (si + 1 == ei) {
+					dp[si][ei] = 0;
+					continue;
+				}
+
+				int minCost = (int)1e9;
+				for (int cut = si + 1 ; cut <= ei - 1; cut++) {
+					int leftCost = dp[si][cut]; // matrixMultiplication_tabu(arr, si, cut, dp);
+					int rightCost =  dp[cut][ei]; // matrixMultiplication_tabu(arr, cut, ei, dp);
+					int myCost = leftCost + rightCost + arr[si] * arr[cut] * arr[ei];
+					minCost = Math.min(minCost, myCost);
+				}
+
+				dp[si][ei] = minCost;
+				continue;
+			}
+		}
+
+		return dp[SI][EI];
+	}
+	static int matrixMultiplication(int arr[]) {
+		int n = arr.length;
+		int[][] dp = new int[n][n];
+		for (int[]d : dp) {
+			Arrays.fill(d, -1);
+		}
+		// return matrixMultiplication_memo(arr, 0, n - 1, dp);
+		return matrixMultiplication_tabu(arr, 0, n - 1, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// Brackets in Matrix Chain Multiplication
+	// just keep storing the string dp every time u store the int dp
+	static int matrixChainOrder_memo(int arr[], int si, int ei, int[][] dp, String[][] sdp) {
+		int n = arr.length;
+		if (si + 1 == ei) {
+			sdp[si][ei] = (char)(si + 'A') + "";
+			return dp[si][ei] = 0;
+		}
+
+		if (dp[si][ei] != -1) {
+			return dp[si][ei];
+		}
+
+		int minCost = (int)1e9;
+		for (int cut = si + 1 ; cut <= ei - 1; cut++) {
+			int leftCost = matrixChainOrder_memo(arr, si, cut, dp, sdp);
+			int rightCost = matrixChainOrder_memo(arr, cut, ei, dp, sdp);
+			int myCost = leftCost + rightCost + arr[si] * arr[cut] * arr[ei];
+			if (myCost < minCost) {
+				minCost = myCost;
+				sdp[si][ei] = "(" + sdp[si][cut] + sdp[cut][ei] + ")";
+			}
+		}
+
+		return dp[si][ei] = minCost;
+	}
+	// observation: gap strategy
+	static int matrixChainOrder_tabu(int arr[], int SI, int EI, int[][] dp, String[][] sdp) {
+		int n = arr.length;
+		for (int gap = 0; gap < n; gap++) {
+			for (int si = 0, ei = gap; ei < n; si++, ei++) {
+				if (si + 1 == ei) {
+					sdp[si][ei] = (char)(si + 'A') + "";
+					dp[si][ei] = 0;
+					continue;
+				}
+
+				int minCost = (int)1e9;
+				for (int cut = si + 1 ; cut <= ei - 1; cut++) {
+					int leftCost = dp[si][cut]; // matrixChainOrder_tabu(arr, si, cut, dp, sdp);
+					int rightCost = dp[cut][ei]; // matrixChainOrder_tabu(arr, cut, ei, dp, sdp);
+					int myCost = leftCost + rightCost + arr[si] * arr[cut] * arr[ei];
+					if (myCost < minCost) {
+						minCost = myCost;
+						sdp[si][ei] = "(" + sdp[si][cut] + sdp[cut][ei] + ")";
+					}
+				}
+
+				dp[si][ei] = minCost;
+				continue;
+			}
+		}
+
+		return dp[SI][EI];
+	}
+	static String matrixChainOrder(int arr[]) {
+		int n = arr.length;
+		int[][] dp = new int[n][n];
+		for (int[]d : dp) {
+			Arrays.fill(d, -1);
+		}
+		String[][] sdp = new String[n][n];
+		// matrixChainOrder_memo(arr, 0, n - 1, dp, sdp);
+		matrixChainOrder_tabu(arr, 0, n - 1, dp, sdp);
+		return sdp[0][n - 1];
+	}
+
+
+
+
+
+
+
+
+
+	// Minimum and Maximum values of an expression with * and +
+	// https://www.geeksforgeeks.org/minimum-maximum-values-expression/
+	// HARD
+	// MEMORIZE
+	static class Pair {
+		int minVal;
+		int maxVal;
+		Pair() {
+
+		}
+		Pair(int minVal, int maxVal) {
+			this.minVal = minVal;
+			this.maxVal = maxVal;
+		}
+	}
+	// if op == '-' then we have to evaluate all 4 possibilities for min max
+	// min can bwe l.min op r.min / l.min op r.max / l.max op r.min / l.max op r.max
+	static Pair evaluate(Pair lhs, Pair rhs, char op) {
+		Pair self = new Pair();
+		if (op == '+') {
+			self.minVal = lhs.minVal + rhs.minVal;
+			self.maxVal = lhs.maxVal + rhs.maxVal;
+		} else {
+			self.minVal = lhs.minVal * rhs.minVal;
+			self.maxVal = lhs.maxVal * rhs.maxVal;
+		}
+
+		return self;
+	}
+	static Pair printMinAndMaxValueOfExp_memo(String str, int si, int ei, Pair[][] dp) {
+		int n = str.length();
+		if (si == ei) {
+			return dp[si][ei] = new Pair(str.charAt(si) - '0', str.charAt(si) - '0');
+		}
+
+		if (dp[si][ei] != null) {
+			return dp[si][ei];
+		}
+
+		Pair myAns = new Pair((int)1e9, -(int)1e9);
+		for (int cut = si + 1; cut <= ei - 1; cut += 2) {
+			Pair lhs = printMinAndMaxValueOfExp_memo(str, si, cut - 1, dp);
+			Pair rhs = printMinAndMaxValueOfExp_memo(str, cut + 1, ei, dp);
+			Pair self = evaluate(lhs, rhs, str.charAt(cut));
+
+			myAns.minVal = Math.min(myAns.minVal, self.minVal);
+			myAns.maxVal = Math.max(myAns.maxVal, self.maxVal);
+		}
+
+		return dp[si][ei] = myAns;
+	}
+	static void printMinAndMaxValueOfExp(String str) {
+		int n = str.length();
+		Pair[][] dp = new Pair[n][n];
+
+		Pair ans = printMinAndMaxValueOfExp_memo(str, 0, n - 1, dp);
+		System.out.println("minVal: " + ans.minVal);
+		System.out.println("maxVal: " + ans.maxVal);
+	}
+	public static void main(String[] args) {
+		System.out.println("Try programiz.pro");
+		printMinAndMaxValueOfExp("1+2*3+4*5");
+	}
+
+
+
+
+
+
+
+
+
+	// 312. Burst Balloons
+	// MEMORIZE
+
+	// BRUTE FORCE: TLE / SLE
+	// 1. Pick a balloon to burst first
+	// 2. Form a new array without that balloon
+	// 3. Recursively burst the remaining ones
+	// Very inefficient due to array copying at every step
+
+	// OPTIMIZATION:
+	// 1. Pick a balloon to burst last in a given subarray [si, ei]
+	// 2. Recursively burst all balloons in the left & right subarrays
+	// 3. Burst the picked balloon last, using the coins from both sides
+
+	// WHY BURST THE PICKED BALLOON LAST:
+	// Bursting the picked balloon first breaks the structure: you'd need to create and manage a new array every time => BRUTE FORCE
+	// If we burst it first, the left & right subarrays wouldn’t know what their actual boundaries are.
+	// By bursting the balloon last, we ensure both left and right subarrays are already solved, allowing us to safely calculate the result with known boundaries.
+	public int getValue(int[] arr, int idx) {
+		int n = arr.length;
+		if (idx < 0 || idx > n - 1) {
+			return 1;
+		}
+		return arr[idx];
+	}
+	public int maxCoins_memo(int[] arr, int si, int ei, int[][] dp) {
+		int n = arr.length;
+		if (si == ei) {
+			return dp[si][ei] = getValue(arr, si - 1) * arr[si] * getValue(arr, ei + 1);
+		}
+
+		if (dp[si][ei] != -1) {
+			return dp[si][ei];
+		}
+
+		int maxCoins = 0;
+		int myCoins = 0;
+		for (int cut = si; cut <= ei; cut++) {
+			int lhs = 0;
+			if (si <= cut - 1) {
+				lhs = maxCoins_memo(arr, si , cut - 1, dp);
+			}
+			int rhs = 0;
+			if (cut + 1 <= ei) {
+				rhs = maxCoins_memo(arr, cut + 1 , ei, dp);
+			}
+			int self = getValue(arr, si - 1) * arr[cut] * getValue(arr, ei + 1);
+			myCoins = lhs + self + rhs;
+
+			maxCoins = Math.max(maxCoins, myCoins);
+		}
+
+		return dp[si][ei] = maxCoins;
+	}
+	public int maxCoins(int[] arr) {
+		int n = arr.length;
+		int[][] dp = new int[n][n];
+		for (int[] d : dp) {
+			Arrays.fill(d, -1);
+		}
+		int ans = maxCoins_memo(arr, 0, n - 1, dp);
+		// display2D(dp);
+		return ans;
+	}
+
+
+
+
+
+
+
+
+
+	// Boolean Parenthesization
+	// https://www.geeksforgeeks.org/problems/boolean-parenthesization5610/1
+	// faith - this method will return me the no of ways we can parenthesize the expression so that the value of expression evaluates to true & false
+	static class Pair {
+		int trueCount = 0;
+		int falseCount = 0;
+		Pair() {
+
+		}
+		Pair(int count) {
+			this.trueCount = count;
+			this.trueCount = count;
+		}
+		Pair(int trueCount, int falseCount) {
+			this.trueCount = trueCount;
+			this.falseCount = falseCount;
+		}
+	}
+	static Pair evaluate(Pair lhs, Pair rhs, char op) {
+		Pair ans = new Pair();
+
+		int trueTrueCount = lhs.trueCount * rhs.trueCount;
+		int trueFalseCount = lhs.trueCount * rhs.falseCount;
+		int falseTrueCount = lhs.falseCount * rhs.trueCount;
+		int falseFalseCount = lhs.falseCount * rhs.falseCount;
+		if (op == '&') {
+			ans.trueCount = trueTrueCount;
+			ans.falseCount = trueFalseCount + falseTrueCount + falseFalseCount;
+		} else if (op == '|') {
+			ans.trueCount = trueTrueCount + trueFalseCount + falseTrueCount;
+			ans.falseCount = falseFalseCount;
+		} else if (op == '^') {
+			ans.trueCount = trueFalseCount + falseTrueCount;
+			ans.falseCount = trueTrueCount + falseFalseCount;
+		}
+
+		return ans;
+	}
+	static Pair countWays_memo(String str, int si, int ei, Pair[][] dp) {
+		int n = str.length();
+		if (si == ei) {
+			char ch = str.charAt(si);
+			int trueCount = ch == 'T' ? 1 : 0;
+			int falseCount = ch == 'F' ? 1 : 0;
+			return dp[si][ei] = new Pair(trueCount, falseCount);
+		}
+
+		if (dp[si][ei] != null) {
+			return dp[si][ei];
+		}
+
+		Pair myAns = new Pair();
+		for (int cut = si + 1; cut <= ei - 1; cut += 2) {
+			Pair lhs = countWays_memo(str , si, cut - 1, dp);
+			Pair rhs = countWays_memo(str , cut + 1, ei, dp);
+
+			Pair self = evaluate(lhs, rhs, str.charAt(cut));
+
+			myAns.trueCount += self.trueCount;
+			myAns.falseCount += self.falseCount;
+		}
+
+		return dp[si][ei] = myAns;
+	}
+	static int countWays(String str) {
+		int n = str.length();
+		Pair[][] dp = new Pair[n][n];
+		Pair ans = countWays_memo(str, 0, n - 1, dp);
+		return ans.trueCount;
+	}
+
+
+
+
+
+
+
+
+
+	// Optimal binary search tree
+	// MEMORIZE
+	// https://www.geeksforgeeks.org/problems/optimal-binary-search-tree2214/1
+	// this method will return the minimum search cost for keys in the range [si, ei]
+	// T: O(n^4)
+	static int optimalSearchTree_memo(int keys[], int freq[], int n, int level, int si, int ei, int[][][] dp) {
+		if (si == ei) {
+			return dp[si][ei][level] = freq[si] * level;
+		}
+
+		if (dp[si][ei][level] != -1) {
+			return dp[si][ei][level];
+		}
+
+		int minCost = (int)1e9;
+		for (int cut = si ; cut <= ei; cut++) { // try each possible node as the root of the current subtree, and recursively calculate the cost of the left and right subtrees
+			int leftCost = (si <= cut - 1) ? optimalSearchTree_memo(keys, freq, n, level + 1, si, cut - 1, dp) : 0;
+			int rightCost = (cut + 1 <= ei) ? optimalSearchTree_memo(keys, freq, n, level + 1, cut + 1, ei, dp) : 0;
+
+			int currentCost = freq[cut] * level + leftCost + rightCost;
+			minCost = Math.min(minCost, currentCost);
+		}
+
+		return dp[si][ei][level] = minCost;
+	}
+	// T: O(n^3)
+	// Why This Works:
+	// sum handles level effects: The sum variable effectively captures the contribution of the current depth. By adding the sum of all frequencies in the current range, we're accounting for the fact that each node's depth increases by 1 when it's placed under the chosen root
+	// relative vs absolute levels: The first approach tracks absolute levels, but what matters is the relative increase in levels as we build the tree. The sum of frequencies in a range, combined with optimal costs of subtrees, implicitly handles this
+	static int optimalSearchTree_memo(int keys[], int freq[], int si, int ei, int[][] dp) {
+		if (si == ei) {
+			return dp[si][ei] = freq[si];
+		}
+
+		if (dp[si][ei] != -1) {
+			return dp[si][ei];
+		}
+
+		int sum = 0;
+		for (int i = si; i <= ei; i++) {
+			sum += freq[i];
+		}
+		int minCost = (int)1e9;
+		for (int cut = si ; cut <= ei; cut++) { // try each possible node as the root of the current subtree, and recursively calculate the cost of the left and right subtrees
+			int leftCost = (si <= cut - 1) ? optimalSearchTree_memo(keys, freq, si, cut - 1, dp) : 0;
+			int rightCost = (cut + 1 <= ei) ? optimalSearchTree_memo(keys, freq, cut + 1, ei, dp) : 0;
+
+			int currentCost = sum + leftCost + rightCost;
+			minCost = Math.min(minCost, currentCost);
+		}
+
+		return dp[si][ei] = minCost;
+	}
+	static int optimalSearchTree(int keys[], int freq[], int n) {
+		// freq[] is already sorted
+		// int[][][] dp = new int[n][n][n + 1];
+		// for (int[][] d1 : dp) {
+		// 	for (int[]d2 : d1) {
+		// 		Arrays.fill(d2, -1);
+		// 	}
+		// }
+		// return optimalSearchTree_memo(keys, freq, n, 1, 0, n - 1, dp);
+
+		int[][] dp = new int[n][n];
+		for (int[]d : dp) {
+			Arrays.fill(d, -1);
+		}
+		return optimalSearchTree_memo(keys, freq, 0, n - 1, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// 1039. Minimum Score Triangulation of Polygon
+	// HARD
+	// MEMORIZE
+	// faith - this method will return the min triangulation score for the vertices in the range [si,ei]
+	public int minScoreTriangulation_memo(int[] arr, int si, int ei, int[][] dp) {
+		// if (ei - si == 2) {
+		// 	return dp[si][ei] = arr[si] * arr[si + 1] * arr[si + 2];
+		// }
+
+		if (dp[si][ei] != 0) {
+			return dp[si][ei];
+		}
+
+		int minScore = (int)1e9;
+		for (int cut = si + 1; cut <= ei - 1; cut++) {
+			int leftScore = (cut - si >= 2) ? minScoreTriangulation_memo(arr, si, cut, dp) : 0;
+			int rightScore = (ei - cut >= 2) ? minScoreTriangulation_memo(arr, cut, ei, dp) : 0;
+			int selfScore = leftScore + rightScore + arr[si] * arr[ei] * arr[cut];
+
+			minScore = Math.min(minScore, selfScore);
+		}
+
+		return dp[si][ei] = minScore;
+	}
+	public int minScoreTriangulation(int[] arr) {
+		int n = arr.length;
+		int[][] dp = new int[n][n];
+		return minScoreTriangulation_memo(arr, 0, n - 1, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// 96. Unique Binary Search Trees
+	// faith - this method will return me the no of unique bst's i can construct using the ele in the range [si,ei]
+	public int numTrees_memo(int si, int ei, int[][] dp) {
+		if (si == ei) {
+			return dp[si][ei] = 1;
+		}
+
+		if (dp[si][ei] != 0) {
+			return dp[si][ei];
+		}
+
+		int count = 0;
+		for (int cut = si; cut <= ei; cut++) { // no of unique bst's i can construct with cut as the root
+			int leftCount = (si <= cut - 1) ? numTrees_memo(si, cut - 1, dp) : 1;
+			int rightCount = (cut + 1 <= ei) ? numTrees_memo(cut + 1, ei, dp) : 1;
+
+			int currCount = leftCount * rightCount;
+			count += currCount;
+		}
+
+		return dp[si][ei] = count;
+	}
+	// faith - this method will return me the no of unique bst's i can construct using "n" elemets
+	public int numTrees_memo(int n, int[] dp) {
+		if (n <= 1) {
+			return dp[n] = 1;
+		}
+
+		if (dp[n] != 0) {
+			return dp[n];
+		}
+
+		int count = 0;
+		for (int cut = 1; cut <= n; cut++) { // no of unique bst's i can construct with cut^(th) ele as the root
+			int leftCount = numTrees_memo(cut - 1 - 1 + 1, dp); // 1...(cut-1)
+			int rightCount = numTrees_memo(n - (cut + 1) + 1, dp); // (cut+1)...n
+
+			int currCount = leftCount * rightCount;
+			count += currCount;
+		}
+
+		return dp[n] = count;
+	}
+	public int numTrees(int n) {
+		// int[][] dp = new int[n + 1][n + 1];
+		// return numTrees_memo(1 , n, dp);
+		int[] dp = new int[n + 1];
+		return numTrees_memo(n, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// 95. Unique Binary Search Trees II
+	// faith - this method will return me the unique bst's i can construct using the ele in the range [si,ei]
+	public List<TreeNode> generateTrees_recu(int si, int ei) {
+		if (si > ei) {
+			List<TreeNode> baseAns = new ArrayList<>();
+			baseAns.add(null);
+			return baseAns;
+		}
+		if (si == ei) {
+			List<TreeNode> baseAns = new ArrayList<>();
+			TreeNode root = new TreeNode(si);
+			baseAns.add(root);
+			return baseAns;
+		}
+
+		List<TreeNode> myAns = new ArrayList<>();
+		for (int cut = si; cut <= ei; cut++) { // unique bst's i can construct with cut as the root
+			List<TreeNode> leftAns = generateTrees_recu(si, cut - 1);
+			List<TreeNode> rightAns = generateTrees_recu(cut + 1, ei);
+
+			for (TreeNode l : leftAns) {
+				for (TreeNode r : rightAns) {
+					TreeNode root = new TreeNode(cut);
+					root.left = l;
+					root.right = r;
+					myAns.add(root);
+				}
+			}
+
+		}
+
+		return myAns;
+	}
+	public List<TreeNode> generateTrees_memo(int si, int ei, List<TreeNode>[][] dp) {
+		if (si > ei) {
+			List<TreeNode> baseAns = new ArrayList<>();
+			baseAns.add(null);
+			return baseAns; // can't save the result in dp because si > ei is not a valid index in dp table: (0,-1)
+			// ideally, we should have done proactive calling, but nonetheless, this works
+		}
+
+		if (dp[si][ei] != null) {
+			return dp[si][ei];
+		}
+
+		List<TreeNode> myAns = new ArrayList<>();
+		for (int cut = si; cut <= ei; cut++) { // unique bst's i can construct with cut as the root
+			List<TreeNode> leftAns = generateTrees_memo(si, cut - 1, dp);
+			List<TreeNode> rightAns = generateTrees_memo(cut + 1, ei, dp);
+
+			for (TreeNode l : leftAns) {
+				for (TreeNode r : rightAns) {
+					TreeNode root = new TreeNode(cut);
+					root.left = l;
+					root.right = r;
+					myAns.add(root);
+				}
+			}
+
+		}
+
+		return dp[si][ei] = myAns;
+	}
+	public List<TreeNode> generateTrees(int n) {
+		// return generateTrees_recu(1, n);
+		List<TreeNode> dp[][] = new ArrayList[n + 1][n + 1];
+		return generateTrees_memo(1, n, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// ======================================== PROBLEMS SET ========================================
+
+
+
+
+
+
+
+
+
+	// 688. Knight Probability in Chessboard
+	// faith - this method will return me the total no of cases where knight will be inside board after k jumps
+	// MEMERIZE - use double data type variables for probabitlity related problems
+	// TLE
+	public double knightProbability_recu(int n, int k, int sr, int sc, int[][] dir) {
+		if (k == 0) {
+			return 1;
+		}
+
+		double ans = 0;
+		for (int[] d : dir) {
+			int nr = sr + d[0];
+			int nc = sc + d[1];
+			if (nr >= 0 && nr < n && nc >= 0 && nc < n) {
+				double smallAns = knightProbability_recu(n, k - 1, nr, nc, dir);
+				ans += smallAns;
+			}
+		}
+
+		return ans;
+	}
+	public double knightProbability_memo(int n, int k, int sr, int sc, int[][] dir, double[][][] dp) {
+		if (k == 0) {
+			return dp[k][sr][sc] = 1;
+		}
+		// System.out.println(k + " " + sr + " " + sc);
+		if (dp[k][sr][sc] != -1) {
+			return dp[k][sr][sc];
+		}
+
+		double ans = 0;
+		for (int[] d : dir) {
+			int nr = sr + d[0];
+			int nc = sc + d[1];
+			if (nr >= 0 && nr < n && nc >= 0 && nc < n) {
+				double smallAns = knightProbability_memo(n, k - 1, nr, nc, dir, dp);
+				ans += smallAns;
+			}
+		}
+
+		return dp[k][sr][sc] = ans;
+	}
+	public double knightProbability(int n, int k, int r, int c) {
+		int[][] dir = new int[][] {{2, 1}, {2, -1}, { -2, 1}, { -2, -1}, {1, 2}, {1, -2}, { -1, 2}, { -1, -2}};
+		double[][][] dp = new double[k + 1][n][n];
+		for (double[][] d1 : dp) {
+			for (double[] d2 : d1) {
+				Arrays.fill(d2, -1);
+			}
+		}
+
+		// double inside = knightProbability_recu(n, k , r , c, dir);
+		double inside = knightProbability_memo(n, k , r , c, dir, dp);
+		double total = Math.pow(8, k);
+		return inside / total;
+	}
+
+
+
+
+
+
+
+
+
+	// 576. Out of Boundary Paths
+	// faith - this method will return the total no of paths to move the ball out of the boundary
+	// starting from (sr,sc) with (maxMoves) moves left
+	long MOD = (int)1e9 + 7;
+	public long findPaths_memo(int n, int m, int maxMove, int sr, int sc, int[][] dir, long[][][] dp) {
+		if (maxMove == 0) {
+			return dp[maxMove][sr][sc] = 0;
+		}
+
+		if (dp[maxMove][sr][sc] != -1) {
+			return dp[maxMove][sr][sc];
+		}
+
+		long count = 0;
+		for (int[] d : dir) {
+			int nr = sr + d[0];
+			int nc = sc + d[1];
+
+			if (nr >= 0 && nr < n && nc >= 0 && nc < m) {
+				count = (count + findPaths_memo(n , m, maxMove - 1, nr, nc, dir, dp)) % MOD;
+			} else {
+				count++; // i am already out of the boundary
+			}
+		}
+
+		return dp[maxMove][sr][sc] = count;
+	}
+	public int findPaths(int n, int m, int maxMove, int sr, int sc) {
+		int[][] dir = new int[][] {{0, 1}, {0, -1}, {1, 0}, { -1, 0}};
+		long[][][] dp = new long[maxMove + 1][n][m];
+		for (long[][] d1 : dp) {
+			for (long[] d2 : d1) {
+				Arrays.fill(d2, -1);
+			}
+		}
+		return (int)findPaths_memo(n , m, maxMove, sr, sc, dir, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// Mobile numeric keypad
+	// https://www.geeksforgeeks.org/problems/mobile-numeric-keypad5456/1
+	public long getCount(int n) {
+		// TODO
+	}
+
+
+
+
+
+
+
+
+
+	// 198. House Robber
+	public int rob_memo(int[] arr, int si, int[] dp) {
+		int n = arr.length;
+
+		if (dp[si] != -1) {
+			return dp[si];
+		}
+
+		int pick = arr[si]; // i choose to pick the curr ele
+		if (si + 2 < n) {
+			pick += rob_memo(arr, si + 2, dp);
+		}
+		int notPick = 0; // i choose NOT to pick the curr ele
+		if (si + 1 < n) {
+			notPick += rob_memo(arr, si + 1, dp);
+		}
+
+		return dp[si] = Math.max(pick, notPick);
+	}
+	public int rob(int[] arr) {
+		int n = arr.length;
+		int[] dp = new int[n];
+		Arrays.fill(dp, -1);
+		return rob_memo(arr, 0, dp);
+	}
+
+
+
+
+
+
+
+
+
+	// 213. House Robber II
+	// MEMORIZE
+	// Since House[1] and House[n] are adjacent, they cannot be robbed together. Therefore, the problem becomes to rob either House[1]-House[n-1] or House[2]-House[n], depending on which choice offers more money. Now the problem has degenerated to the House Robber, which is already been solved
+	// you can't use the same dp for both cases, you need 2 diff dps
+	// since we can't rob both the 0th & n-1th item as they are adjacent, we make 2 diff calls [0, n-2] & [1, n-1]
+	// when we make the calls [0, n-2] & [1, n-1], we're not forcing a pick at 0th / n-1th item
+	// we are just breaking the circular problem into 2 linear subproblems to avoid the circular conflict
+	// in each subproblem, we still have full choice to pick or skip any house for max loot
+	public int rob_memo(int[] arr, int si, int EI, int[] dp) {
+		if (si > EI) {
+			return 0;
+		}
+
+		if (dp[si] != -1) {
+			return dp[si];
+		}
+
+		int pick = arr[si] + rob_memo(arr, si + 2, EI, dp); // i choose to pick the curr ele
+		int notPick = rob_memo(arr, si + 1, EI, dp);; // i choose NOT to pick the curr ele
+
+		return dp[si] = Math.max(pick, notPick);
+	}
+	public int rob(int[] arr) {
+		int n = arr.length;
+		if (n == 1) {
+			return arr[0];
+		}
+
+		int[] dp1 = new int[n];
+		Arrays.fill(dp1, -1);
+		int ans1 = rob_memo(arr, 0, n - 2, dp1);
+
+		int[] dp2 = new int[n];
+		Arrays.fill(dp2, -1);
+		int ans2 = rob_memo(arr, 1, n - 1, dp2);
+
+		return Math.max(ans1, ans2);
+	}
+
+
+
+
+
+
+
+
+
+	// 1388. Pizza With 3n Slices
+	// MEMORIZE
+	// similar to 213. House Robber II
+	// rob n/3 non-adjacent houses from n houses - we are forced to rob exactly n/3 houses
+	// ignore Alice & Bob’s picks explicitly — just focus on selecting n/3 non-adjacent slices
+	// because the slices are in a circle & you picked non-adjacent slices, Alice & Bob automatically take the slices adjacent(left & right) to yours
+	public int maxSizeSlices_memo(int[] arr, int si, int EI, int k, int[][] dp) {
+		int n = arr.length;
+		if (si > EI || k == 0) {
+			return 0;
+		}
+
+		if (dp[si][k] != 0) {
+			return dp[si][k];
+		}
+
+		int pick = arr[si] + maxSizeSlices_memo(arr, si + 2, EI, k - 1, dp); // i choose to pick the curr ele
+		int notPick = maxSizeSlices_memo(arr, si + 1, EI, k, dp); // i choose NOT to pick the curr ele
+
+		return dp[si][k] = Math.max(pick, notPick);
+	}
+	public int maxSizeSlices(int[] arr) {
+		int n = arr.length;
+		int k = n / 3; // k = no of pizza slices left to pick up
+
+		int[][] dp1 = new int[n][k + 1];
+		int ans1 = maxSizeSlices_memo(arr, 0, n - 2, k, dp1);
+
+		int[][] dp2 = new int[n][k + 1];
+		int ans2 = maxSizeSlices_memo(arr, 1, n - 1, k, dp2);
+
+		return Math.max(ans1, ans2);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	public static void display1D(int[] arr) {
 		for (int i : arr) {
-			System.out.print(i + " ");
+			System.out.printf("%-4d", i);
 		}
 		System.out.println();
 	}
-
 	public static void display2D(int[][] arr) {
 		for (int[] a : arr) {
-			display(a);
+			display1D(a);
 		}
 		System.out.println();
 	}
-
 	public static void main(String[] args) {
 		System.out.println("Hello World");
+
+		// ======================================== 2 POINTER SET ========================================
+
 		// long start = System.nanoTime();
 
 		// fibo();
@@ -2668,8 +4404,13 @@ public class DP {
 		// System.out.println("Total execution time: " + (end - start) + " ns");
 		// System.out.println("Total execution time: " + (end - start) / 1_000_000 + " ms");
 
+		// ============================== TARGET SET ========================================
+
 		int[] arr = new int[] {2, 3, 5, 7};
 		int tar = 10;
-		permutation(arr, tar);
+		// int count = permutation(arr, tar);
+		int count = combination(arr, tar);
+		System.out.println("count = " + count);
 	}
+	dp[si][ei] = str.charAt(si) == str.charAt(ei) ? 0 : 1;
 }

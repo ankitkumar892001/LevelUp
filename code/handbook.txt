@@ -70,6 +70,7 @@ to string               sb.toString()
 ArrayList<Integer> al = new ArrayList<>();
 ArrayList<Integer>[] tree = new ArrayList<Integer>[n];          X WRONG
 ArrayList<Integer>[] tree = new ArrayList[n];                   V RIGHT
+List<List<String>>[] dp = new List[n];                          V RIGHT
 ArrayList<TreeNode> ans = new ArrayList<>();
 ArrayList<Integer> newAl = new ArrayList<>(oldAl);
 size                    al.size()
@@ -594,19 +595,28 @@ if s[i] != s[j]
 common faiths
 this method will return me the required data from (si,ei) | (r,c)
 
+
+    // ============================== STRING SET ========================================
+
 subseq -> memoization
 substr -> tabulation
 no point of memoization => because you have to use static variable => forceful recursion => use direct tabulation
 
+    // ============================== TARGET SET ========================================
 
+Infine Supply - use for loop technique
+permutation - for each loop
+combination - for loop wth idx
 
+for knapsack infinite supply - we can solve using both permuation / combination 
+    prefer permutation, simple 1D dp
+    avoid combination, 2D dp, needs opti, same complexity - T:O(n * target)
+Limited Supply - use subseq technique
 
+    // ======================================== PROBLEMS SET ========================================
 
-
-
-
-
-
+For Circular Array where 0 is adjacent to n-1 & you can't pick adjacent ele - 
+use 2 method calls - [0,n-2] & [1,n-1]
 
 
 
